@@ -47,7 +47,7 @@ yarn ios
 
 1. First, go to the GitHub link.
 2. Take the checkout of the Recipe_book repository.
-3. Clone the Dev - 2 branch on the local machine.
+3. Clone the Dev - 1 branch on the local machine.
 4. Run the code `npm install` for the first time.
 5. Forward the built release app via Gmail.
 ## Congratulations! :tada:
