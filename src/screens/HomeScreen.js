@@ -16,15 +16,25 @@ import {COLORS, SIZE} from '../constants/theme';
 import imagePath from '../navStrings/imagePath';
 import axios from 'axios';
 
+const bannerImages = [imagePath.cook, imagePath.cook1, imagePath.cook2]; // Add your image paths here
+
 const HomeScreen = ({navigation}) => {
   const [categories, setCategories] = useState([]);
   const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentBanner, setCurrentBanner] = useState(0); // Start with index 0
 
   useEffect(() => {
-    // getTrendyRecipes();
-
+    getTrendyRecipes();
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % bannerImages.length);
+    }, 5000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
   const getTrendyRecipes = async () => {
     const options = {
       method: 'GET',
@@ -41,9 +51,14 @@ const HomeScreen = ({navigation}) => {
     try {
       const response = await axios.request(options);
       setRecipes(response.data.results);
+      setLoading(false);
       console.log(response.data.results);
     } catch (error) {
       console.error(error);
+      setLoading(false);
+      Alert.alert('','Opps something went wrong!',[
+        {text:'OK', onPress:() => console.log('Ok')}
+      ])
     }
   };
 
@@ -64,13 +79,16 @@ const HomeScreen = ({navigation}) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={'light-content'} />
-      
+
       <View style={styles.topView}>
-        <Image style={styles.banner} source={imagePath.cook} />
+        <Image style={styles.banner} source={bannerImages[currentBanner]} />
       </View>
       <View style={styles.transparentView}>
         <Text style={styles.logo}>Recipe Book</Text>
-        <TouchableOpacity activeOpacity={0.8} style={styles.searchBox}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={styles.searchBox}
+          onPress={() => navigation.navigate('Search')}>
           <Image source={imagePath.search} style={styles.search} />
           <Text style={styles.placeHolder}>Please search food here..</Text>
         </TouchableOpacity>
@@ -83,12 +101,7 @@ const HomeScreen = ({navigation}) => {
           data={MEAL_FILTERS}
           // keyExtractor={item => item}
           renderItem={({item}) => (
-            <TouchableOpacity
-              style={styles.categoryItem}
-              activeOpacity={0.8}
-              onPress={() =>
-                navigation.navigate('RecipeDetails', {type: item.title})
-              }>
+            <TouchableOpacity style={styles.categoryItem} activeOpacity={0.8}>
               <View style={styles.card}>
                 <Image source={imagePath.logo} style={styles.categoryIcon} />
               </View>
@@ -97,40 +110,67 @@ const HomeScreen = ({navigation}) => {
           )}
         />
       </View>
-      <Text style={[styles.heading,{marginTop:5}]}>Trending Recipies</Text>
-      <FlatList
-        horizontal
-        data={recipes}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => {
-          return (
-            <View>
-              <TouchableOpacity
-                style={styles.recipeItem}
-                activeOpacity={0.8}
-                onPress={() =>
-                  navigation.navigate('RecipeDetails', {data: item})
-                }>
-                {item.thumbnail_url ? (
-                  <View style={{borderRadius: 10}}>
-                    <Image
-                      resizeMode="contain"
-                      source={{uri: item.thumbnail_url}}
-                      style={styles.recipeImage}
-                    />
-                  </View>
-                ) : (
-                  <View>
-                    <Text style={{color: 'black'}}>no image</Text>
-                  </View>
-                )}
-                <Text style={{color:'black',bottom:20,textAlign:'center',fontWeight:'500'}}>{item.name}</Text>
+      <Text style={[styles.heading, {marginTop: 5}]}>Trending Recipies</Text>
+      {loading ? (
+        <View>
+          <FlatList
+            horizontal
+            data={MEAL_FILTERS}
+            // keyExtractor={item => item}
+            renderItem={({item}) => (
+              <TouchableOpacity style={styles.categoryItem} activeOpacity={0.8}>
+                <View style={styles.card}>
+                  <Image source={imagePath.logo} style={styles.categoryIcon} />
+                </View>
+                <Text style={styles.iconText}>Loading...</Text>
               </TouchableOpacity>
+            )}
+          />
+        </View>
+      ) : (
+        <FlatList
+          horizontal
+          data={recipes}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => {
+            return (
+              <View>
+                <TouchableOpacity
+                  style={styles.recipeItem}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    navigation.navigate('RecipeDetails', {data: item})
+                  }>
+                  {item.thumbnail_url ? (
+                    <View style={{borderRadius: 10}}>
+                      <Image
+                        resizeMode="contain"
+                        source={{uri: item.thumbnail_url}}
+                        style={styles.recipeImage}
+                      />
+                    </View>
+                  ) : (
+                    <View>
+                      <Text style={{color: 'black'}}>no image</Text>
+                    </View>
+                  )}
+                  <Text
+                    style={{
+                      color: 'black',
+                      bottom: 20,
+                      textAlign: 'center',
+                      fontWeight: '500',
+                    }}>
+                    {item.name}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            );
+          }}
+        />
+      )}
 
-            </View>
-          );
-        }}
-      />
+
     </View>
   );
 };
@@ -154,9 +194,9 @@ const styles = StyleSheet.create({
     height: '40%',
     width: '100%',
     position: 'absolute',
-    backgroundColor: 'rgba(0,0,0,0)',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor:'rgba(0,0,0,.4)',
     borderBottomRightRadius: 15,
     borderBottomLeftRadius: 15,
   },
@@ -164,7 +204,7 @@ const styles = StyleSheet.create({
     height: 60,
     width: '90%',
     borderColor: 'white',
-    backgroundColor: 'white',
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderRadius: 8,
     flexDirection: 'row',
@@ -173,17 +213,18 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
   search: {
-    width: 20,
-    height: 20,
+    width: 25,
+    height: 25,
   },
   placeHolder: {
     fontSize: 16,
+    color:'white',
     marginLeft: 15,
   },
   logo: {
     fontSize: 30,
     color: 'white',
-    fontWeight: 'bold',
+    fontWeight: '900',
     position: 'relative',
     // top:SIZE.height=10,
     bottom: 60,
@@ -192,7 +233,8 @@ const styles = StyleSheet.create({
   note: {
     color: 'white',
     fontWeight: 'bold',
-    right: 50,
+    // right: 50,
+    alignSelf: 'center',
     marginTop: 5,
     fontSize: 16,
   },
@@ -235,14 +277,14 @@ const styles = StyleSheet.create({
   categoryIcon: {
     width: (SIZE.width = 250),
     height: (SIZE.height = 250),
-    alignSelf:'center'
+    alignSelf: 'center',
   },
   iconText: {
     fontWeight: '600',
     fontSize: SIZE.h4,
-    alignSelf:'center',
+    alignSelf: 'center',
     color: 'black',
-    marginTop:10
+    marginTop: 10,
   },
   recipeItem: {
     width: (SIZE.width = 150),
@@ -258,6 +300,14 @@ const styles = StyleSheet.create({
     resizeMode: 'stretch',
     borderRadius: 15,
   },
+  love:{
+    color:'black',
+    alignSelf:'center',
+    // top:SIZE.height='96%',
+    fontWeight:'500',
+    fontSize:SIZE.h4,
+    // position:'absolute'
+  }
 });
 
 export default HomeScreen;
