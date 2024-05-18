@@ -35,7 +35,6 @@ const RecipeDetails = ({route, navigation}) => {
         keyboardShouldPersistTaps="handled">
         {/*Dish name */}
         <Text style={styles.title}>{data.name}</Text>
-        <Text style={styles.title}>{data.id}</Text>
 
         {/*Approved Date */}
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
@@ -51,7 +50,6 @@ const RecipeDetails = ({route, navigation}) => {
         {/*Desription */}
         <Text style={styles.description}>{data.description}</Text>
 
-        <Text style={styles.sectionTitle}>Duration</Text>
 
         {/* Instructions details */}
         <View style={styles.instructionsHeader}>
@@ -153,7 +151,7 @@ const styles = StyleSheet.create({
     marginTop: 0.1,
     marginVertical: 10,
     color: 'black',
-    right: 30,
+    right: SIZE.width=20,
   },
   description: {
     fontSize: SIZE.h4,
